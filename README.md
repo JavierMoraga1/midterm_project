@@ -4,9 +4,9 @@
 ___
 For this midterm project I've choosen a dataset from a Kaggle competitition ([**New York City Taxi Trip Duration**](https://www.kaggle.com/competitions/nyc-taxi-trip-duration/overview)), with a subset of data specifically selected and cleaned from those originally published by the NYC Taxi and Limousine Commission (TLC).
 
-The goal is predict the duration (secs) of a set of taxi trips from the data known at the beginning
+The goal is **predict the duration (secs) of a taxi trip from the data known at its beginning** (vendor, initial al final position, datetime, passenger_count)
 
-To get a score in the competition, you must first built and train a model using a training dataset and then obtain and submit a set of predictions from another testing dataset
+To get a score in the competition, you must first built and train a model using a training dataset and then use another testing dataset to calculate and submit a set of predictions
 
 ### Used Datasets
 ___
@@ -30,29 +30,28 @@ ___
 - **pickup_latitude** - the latitude where the meter was engaged
 - **dropoff_longitude** - the longitude where the meter was disengaged
 - **dropoff_latitude** - the latitude where the meter was disengaged
-- **store_and_fwd_flag** - This flag indicates whether the trip record was held in  vehicle memory before sending to the vendor because the vehicle did not have a connection to the server - Y=store and forward; N=not a store and forward trip
+- **store_and_fwd_flag** - This flag indicates whether the trip record was held in vehicle memory before sending to the vendor because the vehicle did not have a connection to the server - Y=store and forward; N=not a store and forward trip
 - **trip_duration** - duration of the trip in seconds (Target variable)
 
 ### Constraints
 ___
 
-I've respected the constraints of the competition. That means:
+I've respected the main constraints of the competition. That means:
 1. Using only the variables of the test set (i.e. the known data at the beginning of a trip). So, I didn't use `dropoff_datetime` or `store_and_fwd_flag`
 2. The evaluation metric is RMSLE (Root Mean Square Logarithmic Error). RMSLE is better metric than RMSE if there are data very far from the mean
 
 ### Additional dificulties
 ___
-1. The dataset has a very large size (1458644 records, 196MB), which sometimes has forced a reduction in size to be able to train and evaluate the different models on my computer with a reasonable performance
-2. The dataset has a fair amount of "outliers", which make the metric much worse (despite using RMSLE)
-2. The dataset has a good number of "outliers" (trip_duration values very far from the mean)
+1. **The dataset has a very large size (1458644 records, 196MB)**, which sometimes has forced me to reduce its size to be able to train and evaluate the different models on my computer with a reasonable performance
+2. **The dataset has a good number of "outliers"** (trip_duration values very far from the mean) which make the metric much worse (despite using RMSLE)
 
 ## Approach and solutions
 ___
-- For this regression problem I've trained the different types of algorithms seen in the course so far and I've evaluated them with RMSLE (and some other metrics such as RMSE, MAE and R2)
+- For this regression problem I've trained the different types of algorithms seen in the course so far and I've evaluated them using RMSLE (and also some other metrics such as RMSE, MAE and R2)
 - I've selectioned ___XGBoost___ as the best model and tuned its parameters. Given the dispersion of the data and the type of metric, the model has to use logarithms
 - Since the dataset is very large, the model metrics seem to keep improving (very slightly) with a large number of iterations, but the size of the model also increases a lot and its perfomance degrades. For the competition I have used my best model without overfitting (4000 iterations) but for a deployment I think a lighter model with much less (700 iterations) would probably work better
 - Although the Kaggle's competition ended 5 years ago, I have submitted my results for evaluation. The RMSLE score (0.38944) is in the 33th percentile
-- ___Future improvement___: I think a good improvement would be to classify each trip to separate the main population and outliers and apply a different model for each
+- ___Future improvement___: I think a good improvement would be to classify each trip to separate the main population and the outliers and apply a different model for each subdataset
 
 ## Repo description
 ___
@@ -62,7 +61,7 @@ ___
   - Receive data request in json format
   - Validate and adapt the data to the model
   - Predict and return the result in json format
-- `predict_test.py` -> Runs and prints the result of a test request
+- `predict_test.py` -> Sends a test request and prints the result
 - `generate_predictions.py` -> Script to generate the results to be sent to Kaggle. It creates the (`predictions.csv`) file
 - `Pipfile`, `Pipfile.lock` -> For dependency management using Pipenv
 - `Dockerfile` -> Required for build a docker image of the app with the 
@@ -71,9 +70,9 @@ predict service
 
 ## Dependencies Management
 ___
-In order to manage dependencies you must:
+In order to manage the dependencies of the project you could:
 - Install Pipenv => `pip install pipenv`
-- Use it to install the dependencies of the project => `pipenv install`
+- Use it to install the dependencies => `pipenv install`
 
 ## Train the model
 ___
@@ -81,12 +80,19 @@ ___
 2. Run script => `train.py`
 or
 1. Run directly inside the virtual environment => `pipenv run train.py`
+
+Optional parameters:
+- `-E --eta` (default 0.04)
+- `-D --maxdepth` (default 9)
+- `-R --nrounds` (default 200)
+- `-S --nsplits` (default 5)
+- `-O --output` (default `XGB_log_model.bin`)
 ## Run the app locally
 ___
 1. Enter the virtual environment => `pipenv shell`
 2. Run script => `predict.py`
 or
-1. Run directly inside the ve => `pipenv run predict.py`
+1. Run directly inside the ve => `pipenv run predict.py`. This script has an optional parameter =>` -P --port` (`9696` by default)
 
 This use a development server. You can also run locally the app using a deployment server as `gunicorn` (Linux) o `waitress` (Windows), if it is installed in your environment
 - Linux -> `gunicorn --bind=0.0.0.0:9696 predict:app`
@@ -95,6 +101,7 @@ This use a development server. You can also run locally the app using a deployme
 ___
 You can also build a Docker image using the provided `Dockerfile` file =>
 `docker build . -t midterm-tripduration`
+
 To run this image locally => `docker run -it --rm -p 9696:9696 midterm-tripduration`
 ## Deploying to AWS
 ___
@@ -105,18 +112,22 @@ Assuming you have a EWS account you can deploy the image to AWS Elastic Beanstal
 - Create and deploy the app => `eb create midterm-tripduration`
 ## Using the service
 ___
-- For a simple test request you can run the test script => `python predict_test.py`
+- For a simple test request you can run the test script => `python predict_test.py` (needs `requests`. To install => `pip install requests`)
+Optional parameter =>` -H --host` (`localhost:9696` by default)
+
 - Or use curl or another similar tool for the request. For example:
 > `curl --location --request POST 'http://localhost/predict' \
 --header 'Content-Type: application/json' \
---data-raw '{"vendor_id":1,"pickup_datetime":1454709496000,"dropoff_datetime":1454709999000,"passenger_count":2,"pickup_longitude":-73.8706970215,"pickup_latitude":40.7738456726,"dropoff_longitude":-73.9078292847,"dropoff_latitude":40.7532691956,"month":"2","weekday":"4","hour":"21","distance":3.8749020434,"bearing":-126.1779952774'}`
+--data-raw '{"vendor_id":1,"pickup_datetime":1454709496000,"passenger_count":2,"pickup_longitude":-73.8706970215,"pickup_latitude":40.7738456726,"dropoff_longitude":-73.9078292847,"dropoff_latitude":40.7532691956'}`
 
 # INCORPORAR UN BUEN EJEMPLO CURL
 # AÑADIR LA DIRECCION URL CORRECTA
 
-## Generate and submit the results of the competition
+## Generating a file to submit the predictions to Kaggle
 ___
-For generate a .csv file with the predictions => `pipenv run generate_predictions`
+For generate a .csv file with the predictions => `pipenv run generate_predictions`. Optional parameters:
+- `-M --model` (default `XGB_log_model.bin`)
+- `-O --output` (default `predictions.csv`)
 
 
 
