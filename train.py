@@ -39,10 +39,10 @@ parser.add_argument("-O","--output", help="output file")
 args = parser.parse_args()
 config = vars(args)
 
-eta = 0.04
+eta = 0.05
 if config["eta"] != None:
   eta = float(config["eta"])
-max_depth = 9
+max_depth = 10
 if config["maxdepth"] != None:
   max_depth = int(config["maxdepth"])
 xgb_num_rounds = 200

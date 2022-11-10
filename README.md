@@ -43,19 +43,19 @@ I've respected the main constraints of the competition. That means:
 ### Additional dificulties
 ___
 1. **The dataset has a very large size (1458644 records, 196MB)**, which sometimes has forced me to reduce its size to be able to train and evaluate the different models on my computer with a reasonable performance
-2. **The dataset has a good number of "outliers"** (trip_duration values very far from the mean) which make the metric much worse (despite using RMSLE)
+2. **The dataset has a good number of "outliers"** (trip_duration values very far from the mean) which make the result of the metric much worse (despite using RMSLE)
 
 ## Approach and solutions
 ___
-- For this regression problem I've trained the different types of algorithms seen in the course so far and I've evaluated them using RMSLE (and also some other metrics such as RMSE, MAE and R2)
+- For this regression problem I've trained the different types of algorithms seen in the course so far and I've evaluated them using RMSLE
 - I've selectioned ___XGBoost___ as the best model and tuned its parameters. Given the dispersion of the data and the type of metric, the model has to use logarithms
-- Since the dataset is very large, the model metrics seem to keep improving (very slightly) with a large number of iterations, but the size of the model also increases a lot and its perfomance degrades. For the competition I have used my best model without overfitting (4000 iterations) but for a deployment I think a lighter model with much less (700 iterations) would probably work better
+- Since the dataset is very large, the model metrics seem to keep improving (very slightly) with a large number of iterations, but the size of the model also increases a lot and its perfomance degrades. For the competition I have used my best model without overfitting (4000 iterations) but for a deployment I think a lightweight model with a lot less iterations (e.g. 200) would probably work better
 - Although the Kaggle's competition ended 5 years ago, I have submitted my results for evaluation. The RMSLE score (0.38944) is in the 33th percentile
-- ___Future improvement___: I think a good improvement would be to classify each trip to separate the main population and the outliers and apply a different model for each subdataset
+- ___Future improvement___: I think a good improvement would be to try to classify each trip to separate the main population and the outliers and apply a different model for each case
 
 ## Repo description
 ___
-- `tripduration.ipynb` -> Notebook for EDA, data cleaning, model testing and other preparatory steps
+- `notebook.ipynb` -> Notebook for EDA, data cleaning, model testing and other preparatory steps
 - `train.py` -> Script with the entire process to train the model from the initial loading of the dataset to the generation of the `.bin` file
 - `predict.py` -> Creates an application that uses port 9696 and the endpoint `/predict` (`POST` method) to:
   - Receive data request in json format
@@ -66,7 +66,7 @@ ___
 - `Pipfile`, `Pipfile.lock` -> For dependency management using Pipenv
 - `Dockerfile` -> Required for build a docker image of the app with the 
 predict service
-# MODELOS PENDIENTES
+- `XGB_log_model.bin` -> Model file used by predict.py. Another can be generated using train.py
 
 ## Dependencies Management
 ___
@@ -82,17 +82,17 @@ or
 1. Run directly inside the virtual environment => `pipenv run train.py`
 
 Optional parameters:
-- `-E --eta` (default 0.04)
-- `-D --maxdepth` (default 9)
+- `-E --eta` (default 0.05)
+- `-D --maxdepth` (default 10)
 - `-R --nrounds` (default 200)
 - `-S --nsplits` (default 5)
 - `-O --output` (default `XGB_log_model.bin`)
-## Run the app locally
+## Run the app locally (on port 9696)
 ___
 1. Enter the virtual environment => `pipenv shell`
 2. Run script => `predict.py`
 or
-1. Run directly inside the ve => `pipenv run predict.py`. This script has an optional parameter =>` -P --port` (`9696` by default)
+1. Run directly inside the ve => `pipenv run predict.py`.
 
 This use a development server. You can also run locally the app using a deployment server as `gunicorn` (Linux) o `waitress` (Windows), if it is installed in your environment
 - Linux -> `gunicorn --bind=0.0.0.0:9696 predict:app`
@@ -100,28 +100,24 @@ This use a development server. You can also run locally the app using a deployme
 ## Using Docker
 ___
 You can also build a Docker image using the provided `Dockerfile` file =>
-`docker build . -t midterm-tripduration`
+`docker build . -t tripduration`
 
-To run this image locally => `docker run -it --rm -p 9696:9696 midterm-tripduration`
+To run this image locally => `docker run -it --rm -p 9696:9696 tripduration`
 ## Deploying to AWS
 ___
 Assuming you have a EWS account you can deploy the image to AWS Elastic Beanstalk with the next steps:
 - Install CLI into your ve => `pipenv install awsebcli –dev`
 - `pipenv shell`
-- Init EB configuration => `eb init -p docker -r your-zone midterm-tripduration` and authenticate with your credentials
-- Create and deploy the app => `eb create midterm-tripduration`
+- Init EB configuration => `eb init -p docker -r your-zone tripduration` and authenticate with your credentials
+- Create and deploy the app => `eb create tripduration-env`
 ## Using the service
 ___
 - For a simple test request you can run the test script => `python predict_test.py` (needs `requests`. To install => `pip install requests`)
 Optional parameter =>` -H --host` (`localhost:9696` by default)
+Until the end of the project review period the application will remain deployed on AWS Elastic Beanstalk and accessible on tripduration-env.eba-3sk54gy3.eu-west-3.elasticbeanstalk.com
+=> `python predict_test.py --host tripduration-env.eba-3sk54gy3.eu-west-3.elasticbeanstalk.com`
 
-- Or use curl or another similar tool for the request. For example:
-> `curl --location --request POST 'http://localhost/predict' \
---header 'Content-Type: application/json' \
---data-raw '{"vendor_id":1,"pickup_datetime":1454709496000,"passenger_count":2,"pickup_longitude":-73.8706970215,"pickup_latitude":40.7738456726,"dropoff_longitude":-73.9078292847,"dropoff_latitude":40.7532691956'}`
-
-# INCORPORAR UN BUEN EJEMPLO CURL
-# AÑADIR LA DIRECCION URL CORRECTA
+- Or use curl, Postman or another similar tool for the request.
 
 ## Generating a file to submit the predictions to Kaggle
 ___

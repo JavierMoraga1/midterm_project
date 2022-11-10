@@ -2,7 +2,6 @@ import pickle
 import numpy as np
 import pandas as pd
 import xgboost as xgb
-import argparse
 
 from flask import Flask
 from flask import request
@@ -25,20 +24,8 @@ def cDirection(lat1, lng1, lat2, lng2):
   x = np.cos(lat1) * np.sin(lat2) - np.sin(lat1) * np.cos(lat2) * np.cos(lng_delta_rad)
   return np.degrees(np.arctan2(y, x))
 
-#Parameters
-parser = argparse.ArgumentParser(description="Run /predict service",
-                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument("-P","--port", help="port")
-parser.add_argument("-M","--model", help="model file")
-args = parser.parse_args()
-config = vars(args)
-
 model_file = 'XGB_log_model.bin'
-if config["model"] != None:
-  model_file = config["model"]
 port = 9696
-if config["port"] != None:
-  port = config["port"]  
 
 with open(model_file, 'rb') as f_in:
     model = pickle.load(f_in)
