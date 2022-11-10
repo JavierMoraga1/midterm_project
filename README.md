@@ -4,7 +4,7 @@
 ___
 For this midterm project I've choosen a dataset from a Kaggle competitition ([**New York City Taxi Trip Duration**](https://www.kaggle.com/competitions/nyc-taxi-trip-duration/overview)), with a subset of data specifically selected and cleaned from those originally published by the NYC Taxi and Limousine Commission (TLC).
 
-The goal is **predict the duration (secs) of a taxi trip from the data known at its beginning** (vendor, initial al final position, datetime, passenger_count)
+The goal is **to predict the duration (secs) of a taxi trip from the data known at its beginning** (vendor, initial al final position, datetime, passenger_count)
 
 To get a score in the competition, you must first built and train a model using a training dataset and then use another testing dataset to calculate and submit a set of predictions
 
@@ -12,7 +12,7 @@ To get a score in the competition, you must first built and train a model using 
 ___
 
 Description and dowload: https://www.kaggle.com/competitions/nyc-taxi-trip-duration/data
-(also, a copy of the files is available in the repository)
+(also, a copy of the files is available in the repository in zip format)
 
 - train.csv: Used to train the model
 - test.csv: Used to predict and submit the results
@@ -51,13 +51,13 @@ ___
 - I've selectioned ___XGBoost___ as the best model and tuned its parameters. Given the dispersion of the data and the type of metric, the model has to use logarithms
 - Since the dataset is very large, the model metrics seem to keep improving (very slightly) with a large number of iterations, but the size of the model also increases a lot and its perfomance degrades. For the competition I have used my best model without overfitting (4000 iterations) but for a deployment I think a lightweight model with a lot less iterations (e.g. 200) would probably work better
 - Although the Kaggle's competition ended 5 years ago, I have submitted my results for evaluation. The RMSLE score (0.38944) is in the 33th percentile
-- ___Future improvement___: I think a good improvement would be to try to classify each trip to separate the main population and the outliers and apply a different model for each case
+- ___Future improvement___: I think a good improvement would be to try to classify each trip ir order to separate the main population and the outliers and apply a different model for each case
 
 ## Repo description
 ___
 - `notebook.ipynb` -> Notebook for EDA, data cleaning, model testing and other preparatory steps
 - `train.py` -> Script with the entire process to train the model from the initial loading of the dataset to the generation of the `.bin` file
-- `predict.py` -> Creates an application that uses port 9696 and the endpoint `/predict` (`POST` method) to:
+- `predict.py` -> Creates an application that uses port 9696 and the endpoint `/predict` (`POST` method). The service:
   - Receive data request in json format
   - Validate and adapt the data to the model
   - Predict and return the result in json format
@@ -110,12 +110,13 @@ Assuming you have a EWS account you can deploy the image to AWS Elastic Beanstal
 - `pipenv shell`
 - Init EB configuration => `eb init -p docker -r your-zone tripduration` and authenticate with your credentials
 - Create and deploy the app => `eb create tripduration-env`
+
+(**Until the end of the project review period the application will remain deployed on AWS Elastic Beanstalk** and accessible on tripduration-env.eba-3sk54gy3.eu-west-3.elasticbeanstalk.com)
 ## Using the service
 ___
 - For a simple test request you can run the test script => `python predict_test.py` (needs `requests`. To install => `pip install requests`)
-Optional parameter =>` -H --host` (`localhost:9696` by default)
-Until the end of the project review period the application will remain deployed on AWS Elastic Beanstalk and accessible on tripduration-env.eba-3sk54gy3.eu-west-3.elasticbeanstalk.com
-=> `python predict_test.py --host tripduration-env.eba-3sk54gy3.eu-west-3.elasticbeanstalk.com`
+
+Optional parameter =>` -H --host` (`localhost:9696` by default) => `python predict_test.py --host tripduration-env.eba-3sk54gy3.eu-west-3.elasticbeanstalk.com`
 
 - Or use curl, Postman or another similar tool for the request.
 
